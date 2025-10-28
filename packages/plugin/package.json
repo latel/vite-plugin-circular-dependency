@@ -1,10 +1,13 @@
 {
-  "name": "vite-plugin-circular-dependency",
-  "version": "0.5.0",
+  "name": "@cicctencent/vite-plugin-circular-dependency",
+  "version": "1.0.3",
   "description": "Detect circular dependencies",
   "module": "./dist/index.mjs",
   "scripts": {
     "build": "rollup --config rollup.config.ts --configPlugin typescript"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "type": "module",
   "types": "./dist/src/index.d.ts",
