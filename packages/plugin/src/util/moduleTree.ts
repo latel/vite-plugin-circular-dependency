@@ -44,52 +44,53 @@ export function generateCircleNodeMap(rootModuleNode: ModuleNode) {
   const visitedNodeIdSet = new Set<string>();
 
   /** Depth-first traversal of the tree, recording nodes along the way. If a node is found in the path, it indicates a cycle */
-  function depthFirstTraversal(node: ModuleNode, visitPathSet: Set<string>) {
+  function depthFirstTraversal(
+    node: ModuleNode,
+    visitPath: ModuleNode[],
+    visitPathSet: Set<string>
+  ) {
     const { moduleId, children } = node;
     // End if already visited
     if (visitedNodeIdSet.has(moduleId)) {
       return;
     }
     // Add the current node to the path to avoid self-referencing
+    visitPath.push(node);
     visitPathSet.add(moduleId);
     children?.forEach((childNode) => {
       const { moduleId: childModuleId } = childNode;
       if (visitPathSet.has(childModuleId)) {
-        insertCircleNodesToMap(
-          generateCircleNodes(childNode, visitPathSet),
-          circleNodesMap
-        );
+        const circleNodes = extractCircleNodes(childModuleId, visitPath);
+        if (circleNodes.length) {
+          insertCircleNodesToMap(circleNodes, circleNodesMap);
+        }
         return;
       } else {
-        depthFirstTraversal(childNode, visitPathSet);
+        depthFirstTraversal(childNode, visitPath, visitPathSet);
       }
     });
+    visitPath.pop();
     visitedNodeIdSet.add(moduleId);
     // Remove the current node from the path
     visitPathSet.delete(moduleId);
   }
 
-  depthFirstTraversal(rootModuleNode, new Set());
+  depthFirstTraversal(rootModuleNode, [], new Set());
   return circleNodesMap;
 }
 
 /** Generate all nodes on the cycle of a specific node */
-function generateCircleNodes(
-  node: ModuleNode,
-  visitPathSet: Set<string>
+function extractCircleNodes(
+  circleStartModuleId: string,
+  visitPath: ModuleNode[]
 ): ModuleNode[] {
-  const result: ModuleNode[] = [];
-  let currentNode: ModuleNode | undefined = node;
-  do {
-    result.push(currentNode);
-    if (!currentNode.children) {
-      break;
-    }
-    currentNode = Array.from(currentNode.children).find((item) =>
-      visitPathSet.has(item.moduleId) && !result.includes(item)
-    );
-  } while (currentNode && currentNode !== node);
-  return result;
+  const startIndex = visitPath.findIndex(
+    (item) => item.moduleId === circleStartModuleId
+  );
+  if (startIndex === -1) {
+    return [];
+  }
+  return visitPath.slice(startIndex);
 }
 
 /** Insert cycle nodes into the map */
