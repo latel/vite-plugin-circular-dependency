@@ -2,8 +2,8 @@ import type { ModuleNode } from "../module/moduleNode";
 import type { Context } from "../types";
 
 import chalk from "chalk";
-import { writeFileSync } from "node:fs";
 import { writeDataToInteractiveFile } from "./interactive";
+import { writeFileIfChanged } from "./file";
 
 type CircleData = Record<string, ModuleNode["moduleId"][][]>;
 
@@ -62,7 +62,8 @@ function outputCircleData(ctx: Context, data: CircleData) {
 }
 
 function outputToFile(ctx: Context, data: CircleData) {
-  writeFileSync(ctx.outputFilePath, JSON.stringify(data, null, "\t"));
+  const content = JSON.stringify(data, null, "\t");
+  writeFileIfChanged(ctx.outputFilePath, content);
 }
 
 function consolePrint(ctx: Context, data: CircleData) {
